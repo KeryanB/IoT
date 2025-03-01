@@ -366,3 +366,15 @@ def export_presences_par_eleve_pdf(request):
     response = HttpResponse(zip_buffer, content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename="presences_par_eleve.zip"'
     return response
+
+def filter_presences_2(request):
+    classe_id = request.GET.get('classe_id')
+    start_date = request.GET.get('start_date')
+    end_date = request.GET.get('end_date')
+
+    presences = Presence.objects.filter(
+        eleve__classe_id=classe_id,
+        date__range=[start_date, end_date]
+    )
+
+    return render(request, 'partials/presences_list.html', {'presences': presences})

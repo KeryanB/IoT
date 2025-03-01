@@ -100,7 +100,7 @@
                 return;
             }
 
-            fetch(`{% url 'filter_presences' %}?classe_id=${classeId}&start_date=${startDate}&end_date=${endDate}`)
+            fetch(`{% url 'filter_presences_2' %}?classe_id=${classeId}&start_date=${startDate}&end_date=${endDate}`)
                 .then(response => response.text())
                 .then(html => {
                     contentContainer.innerHTML = html;
