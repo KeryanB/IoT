@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.dateparse import parse_date
 from django.utils import timezone
 from cours.models import Cours
-from datetime import datetime, date
+from datetime import datetime
 from django.contrib.auth import get_user_model
 from users.models import Classe
 import io
@@ -19,7 +19,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Table, TableStyle
-import calendar
+
 
 
 User = get_user_model()
@@ -366,15 +366,3 @@ def export_presences_par_eleve_pdf(request):
     response = HttpResponse(zip_buffer, content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename="presences_par_eleve.zip"'
     return response
-
-def filter_presences_2(request):
-    classe_id = request.GET.get('classe_id')
-    start_date = request.GET.get('start_date')
-    end_date = request.GET.get('end_date')
-
-    presences = Presence.objects.filter(
-        eleve__classe_id=classe_id,
-        date__range=[start_date, end_date]
-    )
-
-    return render(request, 'partials/presences_list.html', {'presences': presences})

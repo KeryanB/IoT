@@ -1,7 +1,6 @@
 {% extends "base.html" %}
 {% load crispy_forms_tags %}
 {% load static %}
-
 {% block title %}Exporter les Présences{% endblock %}
 
 {% block content %}
@@ -17,10 +16,11 @@
     <div class="container mt-5">
         <header>
             <h1>Exporter les Présences</h1>
+            <p>Sélectionnez une classe et une période pour afficher les présences et absences.</p>
         </header>
 
         <!-- Formulaire de sélection -->
-        <form id="filterForm" class="mb-4">
+        <form method="GET" action="{% url 'export_presences' %}" class="mb-4">
             <div class="row">
                 <div class="col-md-4">
                     <label for="classeSelect" class="form-label">Sélectionner une classe :</label>
@@ -35,91 +35,77 @@
                 </div>
                 <div class="col-md-3">
                     <label for="startDate" class="form-label">Date de début :</label>
-                    <input type="date" id="startDate" name="start_date" class="form-control">
+                    <input type="date" id="startDate" name="start_date" class="form-control" value="{{ start_date|date:'Y-m-d' }}">
                 </div>
                 <div class="col-md-3">
                     <label for="endDate" class="form-label">Date de fin :</label>
-                    <input type="date" id="endDate" name="end_date" class="form-control">
+                    <input type="date" id="endDate" name="end_date" class="form-control" value="{{ end_date|date:'Y-m-d' }}">
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary w-100">Afficher</button>
                 </div>
             </div>
         </form>
 
-        <!-- Conteneur des présences -->
-        <div id="contentContainer">
-            {% include 'partials/presences_list.html' %}
-        </div>
+        {% if selected_classe and start_date and end_date %}
+            <h3 class="mt-4">Présences et absences pour la classe : {{ selected_classe.nom }} ({{ start_date }} - {{ end_date }})</h3>
 
-        <!-- Boutons d'exportation -->
-        <div id="exportButtons" class="d-flex mt-4" style="display: none;">
-            <a id="exportPdfCours" class="btn btn-danger me-3">Exporter en PDF (par Cours)</a>
-            <a id="exportPdfEleve" class="btn btn-warning">Exporter en PDF (par Élève)</a>
-        </div>
+            {% for jour, cours_list in cours_par_jour.items %}
+                <h4 class="mt-4 text-primary">{{ jour }}</h4>
+
+                {% for entry in cours_list %}
+                    <div class="card mt-3">
+                        <div class="card-header bg-secondary text-white">
+                            {{ entry.cours.nom }} - {{ entry.cours.debut|time }}
+                        </div>
+                        <div class="card-body">
+                            <h5>Présences</h5>
+                            {% if entry.presents %}
+                                <ul class="list-group">
+                                    {% for presence in entry.presents %}
+                                        <li class="list-group-item
+                                            {% if presence.validee_par_prof %}
+                                                bg-success-subtle text-dark
+                                            {% else %}
+                                                bg-warning-subtle text-dark
+                                            {% endif %}">
+                                            {{ presence.eleve.first_name }} {{ presence.eleve.last_name }} - Présent
+                                            {% if not presence.validee_par_prof %} (Non validé) {% endif %}
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>Aucun élève présent.</p>
+                            {% endif %}
+
+                            <h5 class="mt-3">Absences</h5>
+                            {% if entry.absents %}
+                                <ul class="list-group">
+                                    {% for eleve in entry.absents %}
+                                        <li class="list-group-item list-group-item-danger">
+                                            {{ eleve.first_name }} {{ eleve.last_name }} - Absent
+                                        </li>
+                                    {% endfor %}
+                                </ul>
+                            {% else %}
+                                <p>Aucun élève absent.</p>
+                            {% endif %}
+                        </div>
+                    </div>
+                {% endfor %}
+            {% endfor %}
+
+            <!-- Boutons d'exportation en PDF -->
+            <div class="d-flex mt-4">
+                <a href="{% url 'export_presences_pdf' %}?classe_id={{ selected_classe.id }}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-danger me-3">
+                    Exporter en PDF (par Cours)
+                </a>
+                <a href="{% url 'export_presences_par_eleve_pdf' %}?classe_id={{ selected_classe.id }}&start_date={{ start_date|date:'Y-m-d' }}&end_date={{ end_date|date:'Y-m-d' }}" class="btn btn-warning">
+                    Exporter en PDF (par Élève)
+                </a>
+            </div>
+        {% endif %}
     </div>
-
-    <script>
-    document.addEventListener('DOMContentLoaded', function () {
-        const classeSelect = document.getElementById('classeSelect');
-        const startDateInput = document.getElementById('startDate');
-        const endDateInput = document.getElementById('endDate');
-        const contentContainer = document.getElementById('contentContainer');
-        const exportButtons = document.getElementById('exportButtons');
-        const exportPdfCours = document.getElementById('exportPdfCours');
-        const exportPdfEleve = document.getElementById('exportPdfEleve');
-
-        // Fonction pour obtenir le premier et dernier jour du mois actuel
-        function getMonthBounds() {
-            let today = new Date();
-            let year = today.getFullYear();
-            let month = today.getMonth(); // 0 = janvier, 1 = février...
-
-            let firstDay = `${year}-${String(month + 1).padStart(2, '0')}-01`;
-
-            // Calcul du dernier jour du mois sans problème de fuseau horaire
-            let lastDayDate = new Date(year, month + 1, 0);
-            let lastDay = `${year}-${String(month + 1).padStart(2, '0')}-${String(lastDayDate.getDate()).padStart(2, '0')}`;
-
-            return { firstDay, lastDay };
-        }
-
-        // Définir les valeurs par défaut au premier chargement uniquement si vide
-        if (!startDateInput.value || !endDateInput.value) {
-            let bounds = getMonthBounds();
-            startDateInput.value = bounds.firstDay;
-            endDateInput.value = bounds.lastDay;
-        }
-
-        // Met à jour les données en fonction des changements
-        function updateContent() {
-            let classeId = classeSelect.value;
-            let startDate = startDateInput.value;
-            let endDate = endDateInput.value;
-
-            if (!classeId || !startDate || !endDate) {
-                contentContainer.innerHTML = '<p class="text-muted">Sélectionnez une classe et une période pour afficher les présences.</p>';
-                exportButtons.style.display = 'none';
-                return;
-            }
-
-            fetch(`{% url 'filter_presences_2' %}?classe_id=${classeId}&start_date=${startDate}&end_date=${endDate}`)
-                .then(response => response.text())
-                .then(html => {
-                    contentContainer.innerHTML = html;
-                    exportPdfCours.href = `{% url 'export_presences_pdf' %}?classe_id=${classeId}&start_date=${startDate}&end_date=${endDate}`;
-                    exportPdfEleve.href = `{% url 'export_presences_par_eleve_pdf' %}?classe_id=${classeId}&start_date=${startDate}&end_date=${endDate}`;
-                    exportButtons.style.display = 'flex';
-                })
-                .catch(error => console.error('Erreur lors du chargement des présences:', error));
-        }
-
-        // Détecter les changements et mettre à jour automatiquement
-        classeSelect.addEventListener('change', updateContent);
-        startDateInput.addEventListener('change', updateContent);
-        endDateInput.addEventListener('change', updateContent);
-
-        // Charger les données au début
-        updateContent();
-    });
-    </script>
 
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
