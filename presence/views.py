@@ -8,7 +8,7 @@ from django.contrib.auth.decorators import login_required
 from django.utils.dateparse import parse_date
 from django.utils import timezone
 from cours.models import Cours
-from datetime import datetime
+from datetime import datetime, date
 from django.contrib.auth import get_user_model
 from users.models import Classe
 import io
@@ -19,7 +19,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Table, TableStyle
-
+import calendar
 
 
 User = get_user_model()

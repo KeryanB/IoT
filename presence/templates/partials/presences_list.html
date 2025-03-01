@@ -3,9 +3,9 @@
     {% for presence in presences %}
         <div class="card mt-3
             {% if presence.validee_par_prof == True %}
-                bg-success text-white
+                bg-success-subtle text-dark
             {% elif presence.validee_par_prof == False %}
-                bg-warning text-dark
+                bg-warning-subtle text-dark
             {% endif %}
         ">
             <div class="card-header bg-primary text-white">
