@@ -22,7 +22,7 @@
                             <ul class="list-group">
                                 {% for presence in cours.presence_set.all %}
                                     <li class="list-group-item {% if presence.validee_par_prof %}list-group-item-success{% else %}list-group-item-warning{% endif %}">
-                                        {{ presence.eleve.username }} – Arrivé à {{ presence.heure_arrivee }}
+                                        {{ presence.eleve.first_name }} {{ presence.eleve.last_name }} – Arrivé à {{ presence.heure_arrivee }}
                                     </li>
                                 {% endfor %}
                             </ul>
@@ -36,7 +36,7 @@
                             <ul class="list-group">
                                 {% for eleve in cours.absences %}
                                     <li class="list-group-item list-group-item-danger">
-                                        {{ eleve.username }} – Absence
+                                        {{ eleve.first_name }} {{ eleve.last_name }} – Absence
                                     </li>
                                 {% endfor %}
                             </ul>

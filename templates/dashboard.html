@@ -8,26 +8,16 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Page d'accueil</title>
-    <!-- Lien vers le fichier CSS de Bootstrap -->
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{% static 'css/profile.css' %}">
     <style>
-        .user-row:hover {
-            background-color: #f8f9fa;
-            cursor: pointer;
-        }
-        .user-table {
-            border-radius: 10px;
-            overflow: hidden;
-        }
         .card {
-            height: 100%; /* Prend toute la hauteur de la colonne */
+            height: 100%;
             display: flex;
             flex-direction: column;
         }
-
         .card-body {
-            flex-grow: 1; /* Permet au contenu de s'étendre */
+            flex-grow: 1;
             display: flex;
             flex-direction: column;
             justify-content: space-between;
@@ -36,69 +26,73 @@
 </head>
 <body>
     <div class="container">
-        <header class="mt-5">
+        <header class="mt-5 text-center">
             <h1>Bienvenue sur le système de Badgeuse</h1>
-            <p>Bienvenue sur notre plateforme. Choisissez une option ci-dessous :</p>
+            <p>Choisissez une option ci-dessous :</p>
         </header>
 
-        <div class="row mt-4">
-            <div class="col-md-4">
+        <div class="row justify-content-center mt-4">
+            <!-- Carte: Voir mon profil (pour tous) -->
+            <div class="col-md-4 mb-4">
                 <div class="card">
                     <div class="card-header">
                         <h5>Voir mon profil</h5>
                     </div>
                     <div class="card-body">
-                        <p>Accédez à votre profil pour gérer vos informations et plus encore.</p>
+                        <p>Accédez à votre profil pour gérer vos informations.</p>
                         <a href="{% url 'profile' request.user.id %}" class="btn btn-primary">Voir mon profil</a>
                     </div>
                 </div>
             </div>
 
-            <div class="col-md-4">
+            {% if user.role == "eleve" or user.role == "prof" %}
+            <!-- Carte: Voir les présences (uniquement pour élève et prof) -->
+            <div class="col-md-4 mb-4">
                 <div class="card">
                     <div class="card-header">
                         <h5>Voir les présences</h5>
                     </div>
                     <div class="card-body">
-                        <p>Voir vos présences et absences en temps réel.</p>
+                        <p>Consultez vos présences et absences en temps réel.</p>
                         <a href="{% url 'list_presences' %}" class="btn btn-success">Voir les présences</a>
                     </div>
                 </div>
             </div>
+            {% endif %}
 
-            <div class="col-md-4">
+            {% if user.role == "secretaire" %}
+            <!-- Carte: Exporter les présences (uniquement pour la secrétaire) -->
+            <div class="col-md-4 mb-4">
                 <div class="card">
                     <div class="card-header">
                         <h5>Exporter les présences</h5>
                     </div>
                     <div class="card-body">
-                        <p>Exporter les données de présence en PDF pour les profs et secrétaires.</p>
+                        <p>Exporter les données de présence en PDF.</p>
                         <a href="{% url 'export_presences' %}" class="btn btn-info">Exporter en PDF</a>
                     </div>
                 </div>
             </div>
-        </div>
+            {% endif %}
 
-        <!-- Vérifier si l'utilisateur est un admin, professeur ou secrétaire -->
-        {% if user.is_staff or user.role == 'prof' or user.role == 'secretaire' %}
-            <div class="row mt-4">
-                <div class="col-md-4">
-                    <div class="card">
-                        <div class="card-header">
-                            <h5>Voir les utilisateurs</h5>
-                        </div>
-                        <div class="card-body">
-                            <p>Accédez à la liste des utilisateurs du système.</p>
-                            <a href="{% url 'users_list' %}" class="btn btn-warning">Voir les utilisateurs</a>
-                        </div>
+            {% if user.is_staff or user.role == "prof" or user.role == "secretaire" %}
+            <!-- Carte: Voir les utilisateurs (pour admin, prof ou secrétaire) -->
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Voir les utilisateurs</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Accédez à la liste des utilisateurs du système.</p>
+                        <a href="{% url 'users_list' %}" class="btn btn-warning">Voir les utilisateurs</a>
                     </div>
                 </div>
             </div>
-        {% endif %}
-
+            {% endif %}
+        </div>
     </div>
 
-    <!-- Scripts de Bootstrap -->
+    <!-- Scripts Bootstrap -->
     <script src="https://code.jquery.com/jquery-3.5.1.slim.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
