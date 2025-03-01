@@ -1,0 +1,179 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Liste des utilisateurs{% endblock %}
+
+{% block content %}
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Gestion des utilisateurs</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
+    <link rel="stylesheet" href="{% static 'css/profile.css' %}">
+    <style>
+        .user-row:hover {
+            background-color: #f8f9fa;
+            cursor: pointer;
+        }
+        .user-table {
+            border-radius: 10px;
+            overflow: hidden;
+        }
+    </style>
+</head>
+<body>
+    {% if messages %}
+        <div class="container mt-3">
+            {% for message in messages %}
+            <div class="alert
+                {% if message.tags == 'success' %}alert-success
+                {% elif message.tags == 'error' %}alert-danger
+                {% elif message.tags == 'warning' %}alert-warning
+                {% else %}alert-info{% endif %}
+                alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    <section class="users-section">
+        <div class="container py-5">
+            <div class="row">
+                <!-- Liste des utilisateurs élargie -->
+                <div class="col-lg-9">
+                    <div class="card shadow-sm user-table">
+                        <div class="card-header text-center bg-primary text-white">
+                            <h5>Liste des utilisateurs</h5>
+                        </div>
+                        <div class="card-body">
+                            <table class="table table-hover text-center">
+                                <thead class="table-dark">
+                                    <tr>
+                                        <th>Nom</th>
+                                        <th>Prénom</th>
+                                        <th>INE</th>
+                                        <th>Rôle</th>
+                                        <th>Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    {% for user in users %}
+                                    <tr class="user-row" onclick="window.location.href='{% url 'profile' user.id %}'">
+                                        <td>{{ user.last_name }}</td>
+                                        <td>{{ user.first_name }}</td>
+                                        <td>{{ user.ine }}</td>
+                                        <td>
+                                            <span class="badge
+                                                {% if user.role == 'admin' %}bg-danger
+                                                {% elif user.role == 'prof' %}bg-warning text-dark
+                                                {% elif user.role == 'secretaire' %}bg-info
+                                                {% else %}bg-secondary{% endif %}">
+                                                {{ user.role|capfirst }}
+                                            </span>
+                                        </td>
+                                        <td>
+                                            <a href="{% url 'delete_user' user.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Supprimer cet utilisateur ?');">
+                                                Supprimer
+                                            </a>
+                                        </td>
+                                    </tr>
+                                    {% empty %}
+                                    <tr>
+                                        <td colspan="5" class="text-center text-muted">Aucun utilisateur trouvé.</td>
+                                    </tr>
+                                    {% endfor %}
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+                {% if user.is_staff or user.role == 'secretaire' or user.role == 'admin'%}
+                <!-- Formulaire d'ajout d'utilisateur -->
+                <div class="col-lg-3">
+                    <div class="card shadow-sm">
+                        <div class="card-header text-center bg-success text-white">
+                            <h5>Ajouter un utilisateur</h5>
+                        </div>
+                        <div class="card-body">
+                            <form method="post" action="{% url 'add_user' %}">
+                                {% csrf_token %}
+
+                                <!-- Sélection du rôle -->
+                                <div class="mb-3">
+                                    <label class="form-label">Rôle</label>
+                                    <select name="role" id="role-select" class="form-select" required onchange="toggleClasseField()">
+                                        {% for role_key, role_label in roles %}
+                                            <option value="{{ role_key }}">{{ role_label }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <!-- Sélection de la classe (visible uniquement pour les élèves) -->
+                                <div class="mb-3" id="classe-field" style="display: none;">
+                                    <label class="form-label">Classe</label>
+                                    <select name="classe" class="form-select">
+                                        {% for classe in classes %}
+                                            <option value="{{ classe.id }}">{{ classe.nom }}</option>
+                                        {% endfor %}
+                                    </select>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Prénom</label>
+                                    <input type="text" name="first_name" class="form-control">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Nom</label>
+                                    <input type="text" name="last_name" class="form-control">
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Email</label>
+                                    <input type="email" name="email" class="form-control" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">Mot de passe</label>
+                                    <input type="password" name="password" class="form-control" required>
+                                </div>
+
+                                <div class="mb-3">
+                                    <label class="form-label">INE</label>
+                                    <input type="text" name="ine" class="form-control">
+                                </div>
+
+                                <div class="d-grid">
+                                    <button type="submit" class="btn btn-success">Ajouter</button>
+                                </div>
+                            </form>
+                        </div>
+                    </div>
+                </div>
+                {% endif %}
+            </div>
+        </div>
+    </section>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script src="{% static 'js/profile.js' %}"></script>
+    <script>
+        function toggleClasseField() {
+            var roleSelect = document.getElementById("role-select");
+            var classeField = document.getElementById("classe-field");
+            var classeSelect = classeField.querySelector("select");
+
+            if (roleSelect.value === "eleve") {
+                classeField.style.display = "block";
+                classeSelect.disabled = false; // Réactiver le champ si c'est un élève
+            } else {
+                classeField.style.display = "none";
+                classeSelect.disabled = true; // Désactiver le champ pour éviter l'envoi d'une valeur
+            }
+        }
+
+        document.addEventListener("DOMContentLoaded", toggleClasseField);
+    </script>
+
+</body>
+{% endblock %}

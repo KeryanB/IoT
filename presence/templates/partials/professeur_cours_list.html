@@ -1,0 +1,53 @@
+<div>
+    <h3>Cours du jour</h3>
+    {% for cours in cours_list %}
+        <div class="card mt-3">
+            <div class="card-header bg-primary text-white">
+                {{ cours.nom }} - {{ cours.debut|time }}
+            </div>
+            <div class="card-body">
+                <p><strong>Début :</strong> {{ cours.debut|time }}</p>
+                <p><strong>Durée :</strong> {{ cours.duree }} min</p>
+                <!-- Bouton pour basculer l'affichage des présences et absences -->
+                <a class="btn btn-secondary" data-bs-toggle="collapse" href="#collapsePresences{{ cours.id }}" role="button" aria-expanded="false" aria-controls="collapsePresences{{ cours.id }}">
+                    Voir les présences et absences
+                </a>
+                <!-- Section collapsible contenant les présences et absences pour ce cours -->
+                <div class="collapse mt-3" id="collapsePresences{{ cours.id }}">
+                    <div class="card card-body">
+                        <h4>Présences pour {{ cours.nom }}</h4>
+                        <p>Nombre de présences : {{ cours.presence_set.all|length }}</p>
+
+                        {% if cours.presence_set.all %}
+                            <ul class="list-group">
+                                {% for presence in cours.presence_set.all %}
+                                    <li class="list-group-item {% if presence.validee_par_prof %}list-group-item-success{% else %}list-group-item-warning{% endif %}">
+                                        {{ presence.eleve.username }} – Arrivé à {{ presence.heure_arrivee }}
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Aucune présence enregistrée pour ce cours.</p>
+                        {% endif %}
+
+                        <h5>Absences</h5>
+                        <p>Nombre d'absences : {{ cours.absences|length }}</p>
+                        {% if cours.absences %}
+                            <ul class="list-group">
+                                {% for eleve in cours.absences %}
+                                    <li class="list-group-item list-group-item-danger">
+                                        {{ eleve.username }} – Absence
+                                    </li>
+                                {% endfor %}
+                            </ul>
+                        {% else %}
+                            <p>Tous les élèves sont présents.</p>
+                        {% endif %}
+                    </div>
+                </div>
+            </div>
+        </div>
+    {% empty %}
+        <p>Aucun cours prévu pour cette date.</p>
+    {% endfor %}
+</div>

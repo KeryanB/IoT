@@ -1,0 +1,73 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="fr">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Connexion</title>
+    <link rel="stylesheet" href="https://use.fontawesome.com/releases/v5.8.1/css/all.css"
+        integrity="sha384-50oBUHEmvpQ+1lW4y57PTFmhCaXp0ML5d60M1M7uH2+nqUivzIebhndOJK28anvf" crossorigin="anonymous">
+    <link rel="stylesheet" href="{% static 'css/style.css' %}"> <!-- Liens vers tes fichiers CSS -->
+</head>
+
+<body>
+    <div class="container" id="container">
+        <!-- Formulaire Inscription -->
+        <div class="form-container sign-up-container">
+            <form method="post">
+                {% csrf_token %}
+                <h1>Créer un compte</h1>
+                <div class="social-container">
+                    <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
+                    <a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+                <span>ou utilisez votre email pour vous inscrire</span>
+                <input type="text" name="username" placeholder="Nom" required />
+                <input type="email" name="email" placeholder="Email" required />
+                <input type="password" name="password" placeholder="Mot de passe" required />
+                <button type="submit">S'inscrire</button>
+            </form>
+        </div>
+
+        <!-- Formulaire Connexion -->
+        <div class="form-container sign-in-container">
+            <form method="post">
+                {% csrf_token %}
+                <h1>Se connecter</h1>
+                <div class="social-container">
+                    <a href="#" class="social"><i class="fab fa-facebook-f"></i></a>
+                    <a href="#" class="social"><i class="fab fa-google-plus-g"></i></a>
+                    <a href="#" class="social"><i class="fab fa-linkedin-in"></i></a>
+                </div>
+                <span>ou utilisez votre compte</span>
+                <input type="email" name="username" placeholder="Email" required />
+                <input type="password" name="password" placeholder="Mot de passe" required />
+                <a href="#">Mot de passe oublié ?</a>
+                <button type="submit">Se connecter</button>
+            </form>
+        </div>
+
+        <!-- Overlay -->
+        <div class="overlay-container">
+            <div class="overlay">
+                <div class="overlay-panel overlay-left">
+                    <h1>Bienvenue de retour !</h1>
+                    <p>Pour rester connecté avec nous, veuillez vous connecter avec vos informations personnelles</p>
+                    <button class="ghost" id="signIn">Se connecter</button>
+                </div>
+                <div class="overlay-panel overlay-right">
+                    <h1>Bonjour, Ami !</h1>
+                    <p>Entrez vos informations personnelles et commencez votre aventure avec nous</p>
+                    <button class="ghost" id="signUp">S'inscrire</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="{% static 'js/main.js' %}"></script> <!-- Liens vers ton fichier JS -->
+</body>
+
+</html>

@@ -1,0 +1,38 @@
+<div>
+    <h3>Présences</h3>
+    {% for presence in presences %}
+        <div class="card mt-3
+            {% if presence.validee_par_prof == True %}
+                bg-success text-white
+            {% elif presence.validee_par_prof == False %}
+                bg-warning text-dark
+            {% endif %}
+        ">
+            <div class="card-header bg-primary text-white">
+                {{ presence.cours.nom }} - {{ presence.date }}
+            </div>
+            <div class="card-body">
+                <p><strong>Heure d'arrivée :</strong> {{ presence.heure_arrivee }}</p>
+                <p><strong>Validée par le Professeur :</strong>
+                    {% if presence.validee_par_prof %} Oui {% else %} Non {% endif %}
+                </p>
+            </div>
+        </div>
+    {% empty %}
+        <p>Aucune présence enregistrée pour cette date.</p>
+    {% endfor %}
+
+    <h3 class="mt-4">Absences</h3>
+    {% for cours in cours_absents %}
+        <div class="card mt-3 bg-danger text-white">
+            <div class="card-header bg-primary text-white">
+                {{ cours.nom }} - {{ selected_date }}
+            </div>
+            <div class="card-body">
+                <p><strong>Absence :</strong> Vous n'êtes pas inscrit(e) à ce cours pour cette date.</p>
+            </div>
+        </div>
+    {% empty %}
+        <p>Aucune absence enregistrée pour cette date.</p>
+    {% endfor %}
+</div>
