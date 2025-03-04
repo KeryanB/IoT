@@ -73,6 +73,11 @@ def export_presences(request):
                     'absents': absents
                 })
 
+    # Calcul des non-validés (présents mais non validés)
+    for jour, cours_list in cours_par_jour.items():
+        for entry in cours_list:
+            entry["non_valides"] = sum(1 for p in entry["presents"] if not p["validee_par_prof"])
+
     context = {
         'classes': classes,
         'selected_classe': selected_classe,

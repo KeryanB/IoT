@@ -16,7 +16,6 @@
     <div class="container mt-5">
         <header>
             <h1>Exporter les Présences</h1>
-            <p>Sélectionnez une classe et une période pour afficher les présences et absences.</p>
         </header>
 
         <!-- Formulaire de sélection -->
@@ -54,44 +53,56 @@
                 <h4 class="mt-4 text-primary">{{ jour }}</h4>
 
                 {% for entry in cours_list %}
-                    <div class="card mt-3">
-                        <div class="card-header bg-secondary text-white">
-                            {{ entry.cours.nom }} - {{ entry.cours.debut|time }}
-                        </div>
-                        <div class="card-body">
-                            <h5>Présences</h5>
-                            {% if entry.presents %}
-                                <ul class="list-group">
-                                    {% for presence in entry.presents %}
-                                        <li class="list-group-item
-                                            {% if presence.validee_par_prof %}
-                                                bg-success-subtle text-dark
-                                            {% else %}
-                                                bg-warning-subtle text-dark
-                                            {% endif %}">
-                                            {{ presence.eleve.first_name }} {{ presence.eleve.last_name }} - Présent
-                                            {% if not presence.validee_par_prof %} (Non validé) {% endif %}
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p>Aucun élève présent.</p>
-                            {% endif %}
+                    {% with absents=entry.absents|length non_valides=entry.non_valides %}
+                        <div class="card mt-3">
+                            <div class="card-header text-dark
+                                {% if absents > 0 %}
+                                    bg-danger-subtle
+                                {% elif non_valides > 0 %}
+                                    bg-warning-subtle
+                                {% else %}
+                                    bg-success-subtle
+                                {% endif %}">
+                                {{ entry.cours.nom }} - {{ entry.cours.debut|time }}
+                                <button class="btn btn-light btn-sm float-end toggle-details" data-target="details{{ entry.cours.id }}">
+                                    Voir la liste
+                                </button>
+                            </div>
+                            <div class="card-body collapse" id="details{{ entry.cours.id }}">
+                                <h5>Présences</h5>
+                                {% if entry.presents %}
+                                    <ul class="list-group">
+                                        {% for presence in entry.presents %}
+                                            <li class="list-group-item
+                                                {% if presence.validee_par_prof %}
+                                                    bg-success-subtle text-dark
+                                                {% else %}
+                                                    bg-warning-subtle text-dark
+                                                {% endif %}">
+                                                {{ presence.eleve.first_name }} {{ presence.eleve.last_name }} - Présent
+                                                {% if not presence.validee_par_prof %} (Non validé) {% endif %}
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p>Aucun élève présent.</p>
+                                {% endif %}
 
-                            <h5 class="mt-3">Absences</h5>
-                            {% if entry.absents %}
-                                <ul class="list-group">
-                                    {% for eleve in entry.absents %}
-                                        <li class="list-group-item list-group-item-danger">
-                                            {{ eleve.first_name }} {{ eleve.last_name }} - Absent
-                                        </li>
-                                    {% endfor %}
-                                </ul>
-                            {% else %}
-                                <p>Aucun élève absent.</p>
-                            {% endif %}
+                                <h5 class="mt-3">Absences</h5>
+                                {% if entry.absents %}
+                                    <ul class="list-group">
+                                        {% for eleve in entry.absents %}
+                                            <li class="list-group-item list-group-item-danger">
+                                                {{ eleve.first_name }} {{ eleve.last_name }} - Absent
+                                            </li>
+                                        {% endfor %}
+                                    </ul>
+                                {% else %}
+                                    <p>Aucun élève absent.</p>
+                                {% endif %}
+                            </div>
                         </div>
-                    </div>
+                    {% endwith %}
                 {% endfor %}
             {% endfor %}
 
@@ -110,5 +121,21 @@
     <script src="https://code.jquery.com/jquery-3.5.1.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/@popperjs/core@2.5.3/dist/umd/popper.min.js"></script>
     <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/js/bootstrap.min.js"></script>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            document.querySelectorAll('.toggle-details').forEach(button => {
+                button.addEventListener('click', function() {
+                    let target = document.getElementById(this.dataset.target);
+                    if (target.classList.contains('show')) {
+                        target.classList.remove('show');
+                        this.textContent = "Voir la liste";
+                    } else {
+                        target.classList.add('show');
+                        this.textContent = "Masquer la liste";
+                    }
+                });
+            });
+        });
+    </script>
 </body>
 {% endblock %}
