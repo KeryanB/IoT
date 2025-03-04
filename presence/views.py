@@ -19,7 +19,7 @@ from reportlab.lib.pagesizes import letter
 from reportlab.lib import colors
 from reportlab.lib.styles import getSampleStyleSheet
 from reportlab.platypus import Table, TableStyle
-
+from django.views.decorators.http import require_POST
 
 
 User = get_user_model()
@@ -366,3 +366,72 @@ def export_presences_par_eleve_pdf(request):
     response = HttpResponse(zip_buffer, content_type='application/zip')
     response['Content-Disposition'] = 'attachment; filename="presences_par_eleve.zip"'
     return response
+
+@login_required
+@require_POST
+def toggle_presence(request):
+    presence_id = request.GET.get('presence_id')
+    if presence_id:
+        try:
+            presence = Presence.objects.get(id=presence_id)
+            presence.validee_par_prof = not presence.validee_par_prof
+            presence.save()
+            return JsonResponse({'status': 'success'})
+        except Presence.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Presence not found'})
+    else:
+        eleve_id = request.GET.get('eleve_id')
+        cours_id = request.GET.get('cours_id')
+        if eleve_id and cours_id:
+            try:
+                presence, created = Presence.objects.get_or_create(
+                    eleve_id=eleve_id,
+                    cours_id=cours_id,
+                    defaults={'validee_par_prof': True}
+                )
+                if not created:
+                    presence.validee_par_prof = not presence.validee_par_prof
+                    presence.save()
+                arrival_time = presence.heure_arrivee.strftime('%H:%M') if presence.heure_arrivee else ""
+                eleve = presence.eleve
+                return JsonResponse({
+                    'status': 'success',
+                    'presence_id': presence.id,
+                    'eleve_name': f"{eleve.first_name} {eleve.last_name}",
+                    'arrival_time': arrival_time
+                })
+            except Exception as e:
+                return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
+
+@login_required
+@require_POST
+def toggle_all_presence(request):
+    cours_id = request.GET.get('cours_id')
+    if cours_id:
+        try:
+            # Récupère toutes les présences pour ce cours
+            presences = Presence.objects.filter(cours_id=cours_id)
+            # On décide ici de tout valider (mettre validee_par_prof à True)
+            presences.update(validee_par_prof=True)
+            return JsonResponse({'status': 'success'})
+        except Exception as e:
+            return JsonResponse({'status': 'error', 'message': str(e)})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
+
+from django.views.decorators.http import require_POST
+
+@login_required
+@require_POST
+def delete_presence(request):
+    presence_id = request.GET.get('presence_id')
+    if presence_id:
+        try:
+            presence = Presence.objects.get(id=presence_id)
+            eleve_id = presence.eleve.id
+            eleve_name = f"{presence.eleve.first_name} {presence.eleve.last_name}"
+            presence.delete()
+            return JsonResponse({'status': 'success', 'eleve_id': eleve_id, 'eleve_name': eleve_name})
+        except Presence.DoesNotExist:
+            return JsonResponse({'status': 'error', 'message': 'Presence not found'})
+    return JsonResponse({'status': 'error', 'message': 'Invalid request'})

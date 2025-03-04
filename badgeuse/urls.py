@@ -17,7 +17,7 @@ Including another URLconf
 # badgeuse/urls.py
 from django.contrib import admin
 from django.urls import path
-from presence.views import list_presences, filter_prof_cours, filter_presences, export_presences, export_presences_pdf, export_presences_par_eleve_pdf
+from presence.views import list_presences, filter_prof_cours, filter_presences, export_presences, export_presences_pdf, export_presences_par_eleve_pdf, toggle_presence, toggle_all_presence, delete_presence
 from .views import dashboard
 from django.contrib.auth import views as auth_views  # Importer la vue LoginView
 from users.views import profile, users_list, add_user, edit_user, delete_user
@@ -40,4 +40,7 @@ urlpatterns = [
     path('filter_prof_cours/', filter_prof_cours, name='filter_prof_cours'),
     path('export_presences_pdf/', export_presences_pdf, name='export_presences_pdf'),
     path('export_presences_par_eleve_pdf/', export_presences_par_eleve_pdf, name='export_presences_par_eleve_pdf'),
+    path('toggle_presence/', toggle_presence, name='toggle_presence'),
+    path('toggle_all_presence/', toggle_all_presence, name='toggle_all_presence'),
+    path('delete_presence/', delete_presence, name='delete_presence'),
 ]

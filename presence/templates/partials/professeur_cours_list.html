@@ -1,7 +1,8 @@
-<div>
+{% block content %}
+<div class="container mt-5">
     <h3>Cours du jour</h3>
     {% for cours in cours_list %}
-        <div class="card mt-3">
+        <div class="card mt-3" id="cours{{ cours.id }}">
             <div class="card-header bg-primary text-white">
                 {{ cours.nom }} - {{ cours.debut|time }}
             </div>
@@ -9,20 +10,34 @@
                 <p><strong>Début :</strong> {{ cours.debut|time }}</p>
                 <p><strong>Durée :</strong> {{ cours.duree }} min</p>
                 <!-- Bouton pour basculer l'affichage des présences et absences -->
-                <a class="btn btn-secondary" data-bs-toggle="collapse" href="#collapsePresences{{ cours.id }}" role="button" aria-expanded="false" aria-controls="collapsePresences{{ cours.id }}">
+                <a class="btn btn-primary" data-bs-toggle="collapse" href="#collapsePresences{{ cours.id }}" role="button" aria-expanded="false" aria-controls="collapsePresences{{ cours.id }}">
                     Voir les présences et absences
                 </a>
-                <!-- Section collapsible contenant les présences et absences pour ce cours -->
+                <!-- Bouton Tout valider -->
+                <a class="btn btn-secondary" onclick="toggleAll({{ cours.id }})">Tout valider</a>
+                <!-- Section collapsible pour les présences et absences -->
                 <div class="collapse mt-3" id="collapsePresences{{ cours.id }}">
                     <div class="card card-body">
                         <h4>Présences pour {{ cours.nom }}</h4>
-                        <p>Nombre de présences : {{ cours.presence_set.all|length }}</p>
-
+                        <p>
+                            <strong>Nombre de présences :</strong>
+                            <span id="presenceCount{{ cours.id }}">{{ cours.presence_set.all|length }}</span>
+                        </p>
                         {% if cours.presence_set.all %}
-                            <ul class="list-group">
+                            <ul class="list-group" id="presentList{{ cours.id }}">
                                 {% for presence in cours.presence_set.all %}
                                     <li class="list-group-item {% if presence.validee_par_prof %}list-group-item-success{% else %}list-group-item-warning{% endif %}">
                                         {{ presence.eleve.first_name }} {{ presence.eleve.last_name }} – Arrivé à {{ presence.heure_arrivee }}
+                                        <div style="float: right;">
+                                            <!-- Bouton toggle pour la présence -->
+                                            {% if presence.validee_par_prof %}
+                                                <button type="button" class="btn btn-sm btn-warning toggle-presence-btn" data-presence-id="{{ presence.id }}" data-course-id="{{ cours.id }}">Dévalider</button>
+                                            {% else %}
+                                                <button type="button" class="btn btn-sm btn-success toggle-presence-btn" data-presence-id="{{ presence.id }}" data-course-id="{{ cours.id }}">Valider</button>
+                                            {% endif %}
+                                            <!-- Bouton supprimer -->
+                                            <button type="button" class="btn btn-sm btn-danger delete-presence" data-presence-id="{{ presence.id }}" data-course-id="{{ cours.id }}" style="margin-left: 5px;">Supprimer</button>
+                                        </div>
                                     </li>
                                 {% endfor %}
                             </ul>
@@ -30,13 +45,20 @@
                             <p>Aucune présence enregistrée pour ce cours.</p>
                         {% endif %}
 
-                        <h5>Absences</h5>
-                        <p>Nombre d'absences : {{ cours.absences|length }}</p>
+                        <h5 class="mt-3">Absences</h5>
+                        <p>
+                            <strong>Nombre d'absences :</strong>
+                            <span id="absenceCount{{ cours.id }}">{{ cours.absences|length }}</span>
+                        </p>
                         {% if cours.absences %}
-                            <ul class="list-group">
+                            <ul class="list-group" id="absentList{{ cours.id }}">
                                 {% for eleve in cours.absences %}
                                     <li class="list-group-item list-group-item-danger">
                                         {{ eleve.first_name }} {{ eleve.last_name }} – Absence
+                                        <div style="float: right;">
+                                            <!-- Bouton toggle pour marquer comme présent -->
+                                            <button type="button" class="btn btn-sm btn-success toggle-presence-absent" data-cours-id="{{ cours.id }}" data-eleve-id="{{ eleve.id }}">Valider</button>
+                                        </div>
                                     </li>
                                 {% endfor %}
                             </ul>
@@ -51,3 +73,201 @@
         <p>Aucun cours prévu pour cette date.</p>
     {% endfor %}
 </div>
+
+<script>
+    // Fonction pour mettre à jour dynamiquement les compteurs de présents/absents pour un cours
+    function updateCounts(coursId) {
+        const presentList = document.getElementById(`presentList${coursId}`);
+        const absentList = document.getElementById(`absentList${coursId}`);
+        const presenceCountElem = document.getElementById(`presenceCount${coursId}`);
+        const absenceCountElem = document.getElementById(`absenceCount${coursId}`);
+        if (presenceCountElem && absenceCountElem) {
+            presenceCountElem.textContent = presentList ? presentList.children.length : 0;
+            absenceCountElem.textContent = absentList ? absentList.children.length : 0;
+        }
+    }
+
+    // Gestion des clics pour le toggle des présences et absences
+    document.addEventListener('click', function(event) {
+        // Toggle d'une présence (bouton Valider/Dévalider)
+        if (event.target.classList.contains('toggle-presence-btn')) {
+            let btn = event.target;
+            let presenceId = btn.getAttribute('data-presence-id');
+            let coursId = btn.getAttribute('data-course-id');
+            fetch(`/toggle_presence/?presence_id=${presenceId}`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success'){
+                    let li = btn.closest('li');
+                    if(btn.classList.contains('btn-success')){
+                        // Passage de non validé à validé
+                        li.classList.remove('list-group-item-warning');
+                        li.classList.add('list-group-item-success');
+                        btn.classList.remove('btn-success');
+                        btn.classList.add('btn-warning');
+                        btn.textContent = "Dévalider";
+                    } else {
+                        // Passage de validé à non validé
+                        li.classList.remove('list-group-item-success');
+                        li.classList.add('list-group-item-warning');
+                        btn.classList.remove('btn-warning');
+                        btn.classList.add('btn-success');
+                        btn.textContent = "Valider";
+                    }
+                    updateCounts(coursId);
+                } else {
+                    alert("Erreur lors de la mise à jour");
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+            });
+        }
+        // Toggle d'une absence : marquer comme présent
+        else if (event.target.classList.contains('toggle-presence-absent')) {
+            let btn = event.target;
+            let eleveId = btn.getAttribute('data-eleve-id');
+            let coursId = btn.getAttribute('data-cours-id');
+            fetch(`/toggle_presence/?eleve_id=${eleveId}&cours_id=${coursId}`, {
+                method: 'POST',
+                headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+            })
+            .then(response => response.json())
+            .then(data => {
+                if(data.status === 'success'){
+                    // Retirer l'élément de la liste des absents
+                    let absentList = document.getElementById(`absentList${coursId}`);
+                    let absentLi = btn.closest('li');
+                    absentList.removeChild(absentLi);
+
+                    // Ajouter cet élève à la liste des présents
+                    let presentList = document.getElementById(`presentList${coursId}`);
+                    if(!presentList){
+                        presentList = document.createElement('ul');
+                        presentList.classList.add('list-group');
+                        document.querySelector(`#collapsePresences${coursId} .card-body`).appendChild(presentList);
+                    }
+                    let newLi = document.createElement('li');
+                    newLi.classList.add('list-group-item', 'list-group-item-success');
+                    newLi.innerHTML = `${data.eleve_name} – Arrivé à ${data.arrival_time}`;
+
+                    // Créer le bouton toggle pour la nouvelle présence
+                    let newToggleBtn = document.createElement('button');
+                    newToggleBtn.type = 'button';
+                    newToggleBtn.classList.add('btn', 'btn-sm', 'btn-warning', 'toggle-presence-btn');
+                    newToggleBtn.setAttribute('data-presence-id', data.presence_id);
+                    newToggleBtn.setAttribute('data-course-id', coursId);
+                    newToggleBtn.textContent = "Dévalider";
+                    newToggleBtn.style.marginLeft = "5px";
+
+                    // Créer le bouton supprimer pour la nouvelle présence
+                    let newDeleteBtn = document.createElement('button');
+                    newDeleteBtn.type = 'button';
+                    newDeleteBtn.classList.add('btn', 'btn-sm', 'btn-danger', 'delete-presence');
+                    newDeleteBtn.setAttribute('data-presence-id', data.presence_id);
+                    newDeleteBtn.setAttribute('data-course-id', coursId);
+                    newDeleteBtn.textContent = "Supprimer";
+                    newDeleteBtn.style.marginLeft = "5px";
+
+                    // Conteneur des boutons
+                    let btnContainer = document.createElement('div');
+                    btnContainer.style.cssText = "float: right;";
+                    btnContainer.appendChild(newToggleBtn);
+                    btnContainer.appendChild(newDeleteBtn);
+
+                    newLi.appendChild(btnContainer);
+                    presentList.appendChild(newLi);
+                    updateCounts(coursId);
+                } else {
+                    alert("Erreur lors de la mise à jour");
+                }
+            })
+            .catch(error => {
+                console.error('Erreur:', error);
+            });
+        }
+        // Suppression d'une présence
+        else if (event.target.classList.contains('delete-presence')) {
+            let btn = event.target;
+            let presenceId = btn.getAttribute('data-presence-id');
+            let coursId = btn.getAttribute('data-course-id');
+            if(confirm("Confirmer la suppression de la présence ?")){
+                fetch(`/delete_presence/?presence_id=${presenceId}`, {
+                    method: 'POST',
+                    headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+                })
+                .then(response => response.json())
+                .then(data => {
+                    if(data.status === 'success'){
+                        // Supprimer l'élément de la liste des présents
+                        let li = btn.closest('li');
+                        li.parentNode.removeChild(li);
+                        // Ajouter cet élève dans la liste des absents
+                        let absentList = document.getElementById(`absentList${coursId}`);
+                        if(!absentList){
+                            absentList = document.createElement('ul');
+                            absentList.classList.add('list-group');
+                            document.querySelector(`#collapsePresences${coursId} .card-body`).appendChild(absentList);
+                        }
+                        let newLi = document.createElement('li');
+                        newLi.classList.add('list-group-item', 'list-group-item-danger');
+                        newLi.innerHTML = `${data.eleve_name} – Absence`;
+                        // Créer le bouton toggle pour marquer comme présent
+                        let newToggleBtn = document.createElement('button');
+                        newToggleBtn.type = 'button';
+                        newToggleBtn.classList.add('btn', 'btn-sm', 'btn-success', 'toggle-presence-absent');
+                        newToggleBtn.setAttribute('data-cours-id', coursId);
+                        newToggleBtn.setAttribute('data-eleve-id', data.eleve_id);
+                        newToggleBtn.textContent = "Valider";
+                        newToggleBtn.style.marginLeft = "5px";
+                        let btnContainer = document.createElement('div');
+                        btnContainer.style.cssText = "float: right;";
+                        btnContainer.appendChild(newToggleBtn);
+                        newLi.appendChild(btnContainer);
+                        absentList.appendChild(newLi);
+                        updateCounts(coursId);
+                    } else {
+                        alert("Erreur lors de la suppression");
+                    }
+                })
+                .catch(error => {
+                    console.error('Erreur:', error);
+                });
+            }
+        }
+    });
+
+    // Fonction pour "Tout valider" qui met à jour toutes les présences pour le cours
+    function toggleAll(coursId) {
+        fetch(`/toggle_all_presence/?cours_id=${coursId}`, {
+            method: 'POST',
+            headers: { 'X-CSRFToken': '{{ csrf_token }}' }
+        })
+        .then(response => response.json())
+        .then(data => {
+            if(data.status === 'success'){
+                document.querySelectorAll(`button.toggle-presence-btn[data-course-id="${coursId}"]`).forEach(function(btn) {
+                    btn.classList.remove('btn-success', 'btn-warning');
+                    btn.classList.add('btn-warning');
+                    btn.textContent = "Dévalider";
+                    let li = btn.closest('li');
+                    if(li){
+                        li.classList.remove('list-group-item-warning');
+                        li.classList.add('list-group-item-success');
+                    }
+                });
+                updateCounts(coursId);
+            } else {
+                alert("Erreur lors de la mise à jour");
+            }
+        })
+        .catch(error => {
+            console.error('Erreur:', error);
+        });
+    }
+
+</script>
+{% endblock %}

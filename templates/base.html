@@ -14,8 +14,10 @@
                 {% if user.is_authenticated %}
                     {% if user.role == 'eleve' %}
                         <a href="{% url 'list_presences' %}" class="btn btn-outline-light me-2">📅 Mes Présences</a>
-                    {% elif user.role == 'prof' or user.role == 'secretaire' %}
+                    {% elif user.role == 'prof' %}
                         <a href="{% url 'list_presences' %}" class="btn btn-outline-light me-2">📊 Voir les Présences</a>
+                    {% elif user.role == 'secretaire' %}
+                        <a href="{% url 'export_presences' %}" class="btn btn-outline-light me-2">📊 Voir les Présences</a>
                     {% endif %}
                     <form method="post" action="{% url 'logout' %}">
                         {% csrf_token %}
