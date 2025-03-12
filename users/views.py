@@ -10,6 +10,7 @@ from django.http import HttpResponseForbidden
 def profile(request, user_id):
     # Récupère l'utilisateur correspondant à l'ID donné
     profil_utilisateur = get_object_or_404(CustomUser, id=user_id)
+    classes = Classe.objects.all()
 
     # Vérifie si l'utilisateur connecté peut voir le profil demandé
     if profil_utilisateur != request.user:
@@ -17,7 +18,7 @@ def profile(request, user_id):
         if (request.user.role not in ['admin', 'prof', 'secretaire']) and not request.user.is_superuser:
             return HttpResponseForbidden("Vous n'avez pas l'autorisation de voir ce profil.")
 
-    return render(request, 'profile.html', {'profil_utilisateur': profil_utilisateur})
+    return render(request, 'profile.html', {'profil_utilisateur': profil_utilisateur, "classes": classes})
 
 @login_required
 @staff_required
@@ -33,18 +34,26 @@ def add_user(request):
     classes = Classe.objects.all()  # Récupère toutes les classes
 
     if request.method == "POST":
+        role = request.POST["role"]
+        if role == "admin" and not request.user.is_superuser:
+            messages.error(request, "Seul un admin peut ajouter un nouvel admin.")
+            return redirect("users_list")
+
+    if request.method == "POST":
         classe_id = request.POST.get("classe", None)
         email = request.POST["email"]
         password = request.POST["password"]
         first_name = request.POST.get("first_name", "")
         last_name = request.POST.get("last_name", "")
-        ine = request.POST.get("ine", "")
+        ine = request.POST.get("ine", "").strip() or None
+        rfid = request.POST.get("rfid", "")
         role = request.POST["role"]
 
         # Vérifie si l'utilisateur existe déjà
-        if CustomUser.objects.filter(ine=ine).exists():
-            messages.error(request, "Cet INE est déjà pris.")
-            return redirect("users_list")
+        if ine != None:
+            if CustomUser.objects.filter(ine=ine).exists():
+                messages.error(request, "Cet INE est déjà pris.")
+                return redirect("users_list")
 
         if CustomUser.objects.filter(email=email).exists():
             messages.error(request, "Cet email est déjà utilisé.")
@@ -67,15 +76,21 @@ def add_user(request):
 
         # Création de l'utilisateur
         new_user = CustomUser(
-            username=ine,
+            username=email,
             classe=classe,  # Stocke l'objet Classe et non un string
             email=email,
             first_name=first_name,
             last_name=last_name,
             ine=ine,
+            rfid=rfid,
             role=role,
             password=make_password(password)  # Hash du mot de passe
         )
+
+        if role == "admin":
+            new_user.is_superuser = True
+            new_user.is_staff = True
+
         new_user.save()
         messages.success(request, "Utilisateur ajouté avec succès !")
         return redirect("users_list")
@@ -83,27 +98,39 @@ def add_user(request):
     return render(request, "users_list.html", {"classes": classes})  # Passe les classes au template
 
 @login_required
-@admin_required
+@secretaire_or_admin_required
 def delete_user(request, user_id):
-    user = get_object_or_404(CustomUser, id=user_id)
-    user.delete()
+    user_to_delete = get_object_or_404(CustomUser, id=user_id)
+    if request.user.id == user_to_delete.id:
+        messages.error(request, "Vous ne pouvez pas vous supprimer vous-même.")
+        return redirect("users_list")
+    user_to_delete.delete()
     messages.success(request, "Utilisateur supprimé !")
     return redirect("users_list")
 
-@login_required
-@admin_required
+@secretaire_or_admin_required
 def edit_user(request, user_id):
-    user = get_object_or_404(CustomUser, id=user_id)
+    profil_utilisateur = get_object_or_404(CustomUser, id=user_id)
 
     if request.method == "POST":
-        user.username = request.POST["username"]
-        user.email = request.POST["email"]
-        user.role = request.POST["role"]
-        user.first_name = request.POST["first_name"]
-        user.last_name = request.POST["last_name"]
-        user.ine = request.POST["ine"]
-        user.save()
-        messages.success(request, "Utilisateur mis à jour !")
-        return redirect("users_list")
+        profil_utilisateur.first_name = request.POST.get("first_name", "")
+        profil_utilisateur.last_name = request.POST.get("last_name", "")
+        profil_utilisateur.email = request.POST.get("email", "")
+        profil_utilisateur.ine = request.POST.get("ine", "")
+        profil_utilisateur.rfid = request.POST.get("rfid", "")
 
-    return render(request, "edit_user.html", {"user": user})
+        # Gestion de la classe (seulement pour les élèves)
+        classe_id = request.POST.get("classe", None)
+        if classe_id:
+            try:
+                profil_utilisateur.classe = Classe.objects.get(id=classe_id)
+            except Classe.DoesNotExist:
+                profil_utilisateur.classe = None
+        else:
+            profil_utilisateur.classe = None  # Assigner None si aucune classe n'est sélectionnée
+
+        profil_utilisateur.save()
+        messages.success(request, "Profil mis à jour avec succès !")
+        return redirect("profile", user_id=user_id)
+
+    return render(request, "profile.html", {"profil_utilisateur": profil_utilisateur})

@@ -11,6 +11,18 @@
     <link rel="stylesheet" href="{% static 'css/profile.css' %}">
 </head>
 <body>
+    <!-- Conteneur pour les messages d'alerte -->
+    <div class="container mt-3">
+        {% if messages %}
+            {% for message in messages %}
+                <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                    {{ message }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
+            {% endfor %}
+        {% endif %}
+    </div>
+
     <section class="profile-section">
         <div class="container py-5">
             <div class="row">
@@ -24,49 +36,78 @@
                             <p class="text-muted">{{ profil_utilisateur.email }}</p>
                             <div class="d-flex justify-content-center mb-2">
                                 {% if request.user.role == 'admin' or request.user.role == 'secretaire' or request.user.is_superuser %}
-                                    <button type="button" class="btn btn-warning admin-only">Modifier</button>
+                                    <button type="button" class="btn btn-warning" onclick="enableEditing()">Modifier</button>
+                                    <button type="submit" form="editProfileForm" class="btn btn-success d-none" id="saveBtn">Enregistrer</button>
                                 {% endif %}
-                            {% if user.is_authenticated and user == profil_utilisateur %}
-                                <form method="post" action="{% url 'logout' %}">
-                                    {% csrf_token %}
-                                    <button type="submit" class="btn btn-outline-danger ms-2">Déconnexion</button>
-                                </form>
-                            {% endif %}
+                                {% if user.is_authenticated and user == profil_utilisateur %}
+                                    <form method="post" action="{% url 'logout' %}">
+                                        {% csrf_token %}
+                                        <button type="submit" class="btn btn-outline-danger ms-2">Déconnexion</button>
+                                    </form>
+                                {% endif %}
                             </div>
                         </div>
                     </div>
                 </div>
                 <div class="col-lg-8">
-                    <div class="card mb-4">
-                        <div class="card-body">
-                            <div class="row">
-                                <div class="col-sm-3"><p class="mb-0">Classe</p></div>
-                                <div class="col-sm-9"><p class="text-muted mb-0">{{ profil_utilisateur.classe }}</p></div>
-                            </div>
-                            <hr>
-                            <div class="row">
-                                <div class="col-sm-3"><p class="mb-0">INE</p></div>
-                                <div class="col-sm-9"><p class="text-muted mb-0">{{ profil_utilisateur.ine }}</p></div>
-                            </div>
-                            <hr>
-                            <div class="row">
-                                <div class="col-sm-3"><p class="mb-0">Prénom</p></div>
-                                <div class="col-sm-9"><p class="text-muted mb-0">{{ profil_utilisateur.first_name }}</p></div>
-                            </div>
-                            <hr>
-                            <div class="row">
-                                <div class="col-sm-3"><p class="mb-0">Nom</p></div>
-                                <div class="col-sm-9"><p class="text-muted mb-0">{{ profil_utilisateur.last_name }}</p></div>
+                    <form id="editProfileForm" method="post" action="{% url 'edit_user' profil_utilisateur.id %}">
+                        {% csrf_token %}
+                        <div class="card mb-4">
+                            <div class="card-body">
+                                <div class="row">
+                                    <div class="col-sm-3"><p class="mb-0">Classe</p></div>
+                                    <div class="col-sm-9">
+                                        <select name="classe" class="form-control" disabled>
+                                            <option value="">Aucune classe</option>
+                                            {% for classe in classes %}
+                                                <option value="{{ classe.id }}" {% if profil_utilisateur.classe and profil_utilisateur.classe.id == classe.id %}selected{% endif %}>{{ classe.nom }}</option>
+                                            {% endfor %}
+                                        </select>
+                                    </div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3"><p class="mb-0">INE</p></div>
+                                    <div class="col-sm-9"><input type="text" name="ine" class="form-control" value="{{ profil_utilisateur.ine }}" disabled></div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3"><p class="mb-0">RFID</p></div>
+                                    <div class="col-sm-9"><input type="text" name="rfid" class="form-control" value="{{ profil_utilisateur.rfid }}" disabled></div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3"><p class="mb-0">Prénom</p></div>
+                                    <div class="col-sm-9"><input type="text" name="first_name" class="form-control" value="{{ profil_utilisateur.first_name }}" disabled></div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3"><p class="mb-0">Nom</p></div>
+                                    <div class="col-sm-9"><input type="text" name="last_name" class="form-control" value="{{ profil_utilisateur.last_name }}" disabled></div>
+                                </div>
+                                <hr>
+                                <div class="row">
+                                    <div class="col-sm-3"><p class="mb-0">Email</p></div>
+                                    <div class="col-sm-9"><input type="email" name="email" class="form-control" value="{{ profil_utilisateur.email }}" disabled></div>
+                                </div>
                             </div>
                         </div>
-                    </div>
+                    </form>
                 </div>
             </div>
         </div>
     </section>
 
+    <script>
+        function enableEditing() {
+            document.querySelectorAll("#editProfileForm input, #editProfileForm select").forEach(element => {
+                element.removeAttribute("disabled");
+            });
+            document.getElementById("saveBtn").classList.remove("d-none");
+        }
+    </script>
+
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
     <script src="{% static 'js/profile.js' %}"></script>
 </body>
 {% endblock %}
-

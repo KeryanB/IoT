@@ -36,11 +36,12 @@
             {% endfor %}
         </div>
     {% endif %}
+
     <section class="users-section">
         <div class="container py-5">
             <div class="row">
-                <!-- Liste des utilisateurs élargie -->
-                <div class="col-lg-9">
+                <!-- Dynamique : si le formulaire est caché, le tableau est centré -->
+                <div class="{% if user.role == 'prof' %}col-lg-12{% else %}col-lg-9{% endif %}">
                     <div class="card shadow-sm user-table">
                         <div class="card-header text-center bg-primary text-white">
                             <h5>Liste des utilisateurs</h5>
@@ -53,7 +54,9 @@
                                         <th>Prénom</th>
                                         <th>INE</th>
                                         <th>Rôle</th>
-                                        <th>Action</th>
+                                        {% if request.user.role != 'prof' %}
+                                            <th>Action</th>
+                                        {% endif %}
                                     </tr>
                                 </thead>
                                 <tbody>
@@ -71,15 +74,27 @@
                                                 {{ user.role|capfirst }}
                                             </span>
                                         </td>
-                                        <td>
-                                            <a href="{% url 'delete_user' user.id %}" class="btn btn-sm btn-danger" onclick="return confirm('Supprimer cet utilisateur ?');">
-                                                Supprimer
-                                            </a>
-                                        </td>
+                                        {% if request.user.role != 'prof' %}
+                                            <td>
+                                                {% if request.user.role == 'secretaire' and user.role == 'admin' %}
+                                                {% elif request.user.role == 'secretaire' and user.is_staff %}
+                                                {% elif request.user.role == 'secretaire' and user.is_superuser %}
+                                                {% elif request.user.id == user.id %}
+                                                        <!-- Une secrétaire ne peut pas supprimer un admin -->
+                                                {% else %}
+                                                <a href="{% url 'delete_user' user.id %}" class="btn btn-sm btn-danger"
+                                                   onclick="return confirm('Supprimer cet utilisateur ?');">
+                                                    Supprimer
+                                                </a>
+                                                {% endif %}
+                                            </td>
+                                        {% endif %}
                                     </tr>
                                     {% empty %}
                                     <tr>
-                                        <td colspan="5" class="text-center text-muted">Aucun utilisateur trouvé.</td>
+                                        <td colspan="{% if request.user.role == 'prof' %}4{% else %}5{% endif %}" class="text-center text-muted">
+                                            Aucun utilisateur trouvé.
+                                        </td>
                                     </tr>
                                     {% endfor %}
                                 </tbody>
@@ -87,7 +102,8 @@
                         </div>
                     </div>
                 </div>
-                {% if user.is_staff or user.role == 'secretaire' or user.role == 'admin'%}
+
+                {% if user.is_staff or user.role == 'secretaire' or user.role == 'admin' %}
                 <!-- Formulaire d'ajout d'utilisateur -->
                 <div class="col-lg-3">
                     <div class="card shadow-sm">
@@ -143,6 +159,12 @@
                                     <input type="text" name="ine" class="form-control">
                                 </div>
 
+                                <!-- Nouveau champ RFID -->
+                                <div class="mb-3">
+                                    <label class="form-label">RFID</label>
+                                    <input type="text" name="rfid" class="form-control" placeholder="Saisir le code RFID">
+                                </div>
+
                                 <div class="d-grid">
                                     <button type="submit" class="btn btn-success">Ajouter</button>
                                 </div>
@@ -165,10 +187,10 @@
 
             if (roleSelect.value === "eleve") {
                 classeField.style.display = "block";
-                classeSelect.disabled = false; // Réactiver le champ si c'est un élève
+                classeSelect.disabled = false;
             } else {
                 classeField.style.display = "none";
-                classeSelect.disabled = true; // Désactiver le champ pour éviter l'envoi d'une valeur
+                classeSelect.disabled = true;
             }
         }
 

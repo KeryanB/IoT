@@ -39,6 +39,8 @@
                         <a href="{% url 'list_presences' %}" class="btn btn-outline-light me-2">📊 Voir les Présences</a>
                     {% elif user.role == 'secretaire' %}
                         <a href="{% url 'export_presences' %}" class="btn btn-outline-light me-2">📊 Voir les Présences</a>
+                    {% elif user.role == 'admin' or user.is_superuser%}
+                        <a href="/admin" class="btn btn-outline-light me-2">👨🏻‍💻 Panel Administrateur</a>
                     {% endif %}
                     <form method="post" action="{% url 'logout' %}" class="ms-2">
                         {% csrf_token %}

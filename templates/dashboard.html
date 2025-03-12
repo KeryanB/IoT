@@ -75,6 +75,21 @@
             </div>
             {% endif %}
 
+            {% if user.role == "admin" or user.is_superuser %}
+            <!-- Carte: Exporter les présences (uniquement pour la secrétaire) -->
+            <div class="col-md-4 mb-4">
+                <div class="card">
+                    <div class="card-header">
+                        <h5>Voir le panel administrateur</h5>
+                    </div>
+                    <div class="card-body">
+                        <p>Accédez au panel administrateur.</p>
+                        <a href="/admin" class="btn btn-danger">Voir le panel administrateur</a>
+                    </div>
+                </div>
+            </div>
+            {% endif %}
+
             {% if user.is_staff or user.role == "prof" or user.role == "secretaire" %}
             <!-- Carte: Voir les utilisateurs (pour admin, prof ou secrétaire) -->
             <div class="col-md-4 mb-4">

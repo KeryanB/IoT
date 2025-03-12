@@ -18,6 +18,7 @@ class CustomUser(AbstractUser):
     role = models.CharField(max_length=20, choices=ROLES)
     ine = models.CharField(max_length=15, blank=True, null=True)
     classe = models.ForeignKey(Classe, on_delete=models.SET_NULL, null=True, blank=True, help_text="Applicable uniquement si le rôle est Élève")
+    rfid = models.CharField(max_length=15, blank=True, null=True)
 
     def __str__(self):
         return f"{self.username} ({self.role})"
