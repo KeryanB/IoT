@@ -1,17 +1,15 @@
 {% extends "base.html" %}
 {% load static %}
-{% block title %}Page d'utilisateur{% endblock %}
+{% block title %}Profil de {{ profil_utilisateur.username }}{% endblock %}
 
 {% block content %}
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Profil de {{ profil_utilisateur.username }}</title>
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css">
     <link rel="stylesheet" href="{% static 'css/profile.css' %}">
 </head>
 <body>
-    <!-- Conteneur pour les messages d'alerte -->
     <div class="container mt-3">
         {% if messages %}
             {% for message in messages %}
@@ -90,6 +88,31 @@
                                     <div class="col-sm-3"><p class="mb-0">Email</p></div>
                                     <div class="col-sm-9"><input type="email" name="email" class="form-control" value="{{ profil_utilisateur.email }}" disabled></div>
                                 </div>
+
+                                {% if user.is_authenticated and user == profil_utilisateur %}
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-sm-3"><p class="mb-0">Nouveau mot de passe</p></div>
+                                        <div class="col-sm-9">
+                                            <input type="password" id="new_password" class="form-control">
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-sm-3"><p class="mb-0">Confirmer le mot de passe</p></div>
+                                        <div class="col-sm-9">
+                                            <input type="password" id="confirm_password" class="form-control">
+                                        </div>
+                                    </div>
+                                    <hr>
+                                    <div class="row">
+                                        <div class="col-sm-3"></div>
+                                        <div class="col-sm-9">
+                                            <button type="button" class="btn btn-primary" onclick="changePassword()">Changer de mot de passe</button>
+                                            <p id="password_message" class="text-danger mt-2" style="display: none;"></p>
+                                        </div>
+                                    </div>
+                                {% endif %}
                             </div>
                         </div>
                     </form>
@@ -105,9 +128,41 @@
             });
             document.getElementById("saveBtn").classList.remove("d-none");
         }
-    </script>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="{% static 'js/profile.js' %}"></script>
+        function changePassword() {
+            let newPassword = document.getElementById("new_password").value;
+            let confirmPassword = document.getElementById("confirm_password").value;
+            let messageElement = document.getElementById("password_message");
+
+            if (newPassword !== confirmPassword) {
+                messageElement.innerText = "Les mots de passe ne correspondent pas.";
+                messageElement.style.display = "block";
+                return;
+            }
+
+            fetch("{% url 'change_password' profil_utilisateur.id %}", {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json",
+                    "X-CSRFToken": "{{ csrf_token }}"
+                },
+                body: JSON.stringify({ "password": newPassword })
+            })
+            .then(response => response.json())
+            .then(data => {
+                if (data.status === "success") {
+                    messageElement.innerText = "Mot de passe changé avec succès !";
+                    messageElement.style.color = "green";
+                } else {
+                    messageElement.innerText = "Erreur : " + data.message;
+                }
+                messageElement.style.display = "block";
+            })
+            .catch(() => {
+                messageElement.innerText = "Une erreur est survenue.";
+                messageElement.style.display = "block";
+            });
+        }
+    </script>
 </body>
 {% endblock %}

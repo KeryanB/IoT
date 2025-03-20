@@ -411,23 +411,6 @@ def toggle_presence(request):
 
 @login_required
 @require_POST
-def toggle_all_presence(request):
-    cours_id = request.GET.get('cours_id')
-    if cours_id:
-        try:
-            # Récupère toutes les présences pour ce cours
-            presences = Presence.objects.filter(cours_id=cours_id)
-            # On décide ici de tout valider (mettre validee_par_prof à True)
-            presences.update(validee_par_prof=True)
-            return JsonResponse({'status': 'success'})
-        except Exception as e:
-            return JsonResponse({'status': 'error', 'message': str(e)})
-    return JsonResponse({'status': 'error', 'message': 'Invalid request'})
-
-from django.views.decorators.http import require_POST
-
-@login_required
-@require_POST
 def delete_presence(request):
     presence_id = request.GET.get('presence_id')
     if presence_id:

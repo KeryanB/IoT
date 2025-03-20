@@ -5,6 +5,9 @@ from users.models import CustomUser, Classe
 from django.contrib import messages
 from django.contrib.auth.hashers import make_password
 from django.http import HttpResponseForbidden
+from django.views.decorators.csrf import csrf_exempt
+from django.http import JsonResponse
+import json
 
 @login_required
 def profile(request, user_id):
@@ -134,3 +137,30 @@ def edit_user(request, user_id):
         return redirect("profile", user_id=user_id)
 
     return render(request, "profile.html", {"profil_utilisateur": profil_utilisateur})
+
+
+@login_required  # ✅ Vérifie que l'utilisateur est connecté
+@csrf_exempt    # ❗ On va sécuriser différemment
+def change_password(request, user_id):
+    if request.user.id == user_id:
+        try:
+            if request.method == "POST":
+                data = json.loads(request.body)
+                new_password = data.get("password")
+
+                if not new_password:
+                    return JsonResponse({"status": "error", "message": "Le mot de passe est requis."}, status=400)
+
+                # ✅ Récupérer l'utilisateur connecté
+                user = request.user
+
+                # 🔒 Changer le mot de passe de manière sécurisée
+                user.set_password(new_password)  # Utilise set_password pour gérer le hashage correctement
+                user.save()
+
+                return JsonResponse({"status": "success", "message": "Mot de passe changé avec succès."})
+
+            return JsonResponse({"status": "error", "message": "Méthode non autorisée."}, status=405)
+        except Exception as e:
+            print(f"❌ Erreur serveur : {e}")
+            return JsonResponse({"status": "error", "message": str(e)}, status=500)

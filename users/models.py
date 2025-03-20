@@ -4,10 +4,12 @@ from django.conf import settings
 
 
 class Classe(models.Model):
-    nom = models.CharField(max_length=100, unique=True)  # Nom de la classe (ex: "Mathématiques 101")
+    nom = models.CharField(max_length=100, unique=True)  # Nom de la classe (ex: "FIP-GE4 Gr2")
+    url_ical = models.URLField(blank=True, null=True, help_text="URL du calendrier iCal de la classe")
 
     def __str__(self):
         return self.nom
+
 class CustomUser(AbstractUser):
     ROLES = [
         ('admin', 'Admin'),
