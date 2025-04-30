@@ -20,7 +20,6 @@ GPIO.setmode(GPIO.BCM)
 GPIO_TRIGGER_PIN = 18
 GPIO.setup(GPIO_TRIGGER_PIN, GPIO.IN, pull_up_down=GPIO.PUD_DOWN)
 
-# Lecture en continu du badge RFID
 def rfid_loop():
     while True:
         uid = read_rfid_uid(timeout=1)
@@ -36,7 +35,23 @@ def rfid_loop():
                 else:
                     display_message("Pas de cours")
             else:
-                display_message("Badge inconnu")
+                display_message("Badge inconnu, scannez carte")
+                ine, nom, prenom = extract_ine_from_card()
+                if ine:
+                    user = CustomUser.objects.filter(ine=ine).first()
+                    if user:
+                        user.rfid = uid
+                        user.save()
+                        display_message(f"{user.first_name} lié au badge")
+                        cours = get_current_cours(user)
+                        if cours:
+                            Presence.objects.get_or_create(eleve=user, cours=cours, defaults={
+                                'validee_par_prof': False
+                            })
+                    else:
+                        display_message("INE inconnu")
+                else:
+                    display_message("Échec OCR")
         time.sleep(0.2)
 
 # Déclencheur OCR si carte insérée (GPIO)
