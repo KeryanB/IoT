@@ -5,7 +5,7 @@ import time
 import RPi.GPIO as GPIO
 
 # Django setup
-os.environ.setdefault("DJANGO_SETTINGS_MODULE", "ton_projet.settings")  # adapte ce nom
+os.environ.setdefault("DJANGO_SETTINGS_MODULE", "badgeuse.settings")  # adapte ce nom
 django.setup()
 
 from users.models import CustomUser
