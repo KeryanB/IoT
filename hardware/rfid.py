@@ -1,4 +1,3 @@
-import RPi.GPIO as GPIO
 import mfrc522
 import time
 
