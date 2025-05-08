@@ -354,7 +354,7 @@ def export_presences_par_eleve_pdf(request):
             table.setStyle(style)
 
             table.wrapOn(p, 50, 700)
-            table.drawOn(p, 50, y_position - 50)
+            table.drawOn(p, 50, y_position - table._height)
 
             p.showPage()
             p.save()
