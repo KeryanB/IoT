@@ -24,7 +24,7 @@ from django.utils import timezone
 # ---------------- Fenêtres temporelles -----------
 EARLY_ALLOWED   = timedelta(minutes=15)  # on peut badger 15 min avant le début
 LATE_CUTOFF     = timedelta(minutes=15)  # plus possible 15 min avant la fin
-PROF_CONFIRM_S  = 10                     # prof a 10 s pour rebadger et valider
+PROF_CONFIRM_S  = 5                     # prof a 10 s pour rebadger et valider
 
 # ---------------- GPIO ----------------------------
 GPIO_TRIGGER_PIN = 18
@@ -44,7 +44,7 @@ def badge_window_open(cours):
 
 def cours_for_eleve(user):
     now = _now()
-    return Cours.objects.filter(debut__lte=now, fin__gte=now, classes=user.classe).first()
+    return Cours.objects.filter(debut__lte=now + EARLY_ALLOWED, fin__gte=now, classes=user.classe).first()
 
 
 def cours_for_prof(prof):
