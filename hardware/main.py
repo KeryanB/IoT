@@ -61,7 +61,7 @@ def rfid_loop():
 
 
 def gpio_listener():
-    """Déclenché par le bouton/laser : associe badge RFID à la carte d’étudiant."""
+    """Déclenché par le bouton associe badge RFID à la carte d’étudiant."""
     while True:
         if lgpio.gpio_read(h, GPIO_TRIGGER_PIN) == 1:
             # ---------------- Scan OCR ----------------
