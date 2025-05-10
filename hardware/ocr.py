@@ -17,7 +17,7 @@ def extract_ine_from_card():
 
         # Recadrer la zone INE
         image = Image.open("carte.jpg")
-        box = (2150, 2200, 3800, 2592)  # À adapter à ta résolution/carte
+        box = (2150, 2300, 3600, 2550)  # À adapter à ta résolution/carte
         cropped_image = image.crop(box)
         cropped_image.save("image_cropped.jpg")
 
