@@ -22,9 +22,9 @@ from hardware.led import led_on, led_off # contrôle NeoPixel (WS281x)
 from django.utils import timezone
 
 # ---------------- Fenêtres temporelles -----------
-EARLY_ALLOWED   = timedelta(minutes=15)  # on peut badger 15 min avant le début
-LATE_CUTOFF     = timedelta(minutes=15)  # plus possible 15 min avant la fin
-PROF_CONFIRM_S  = 5                     # prof a 10 s pour rebadger et valider
+EARLY_ALLOWED   = timedelta(minutes=15)  # on peut badger 15 min avant le début
+LATE_CUTOFF     = timedelta(minutes=15)  # plus possible 15 min avant la fin
+PROF_CONFIRM_S  = 5                     # prof a 10 s pour rebadger et valider
 
 # ---------------- GPIO ----------------------------
 GPIO_TRIGGER_PIN = 18
@@ -133,6 +133,7 @@ def gpio_listener():
                     if uid:
                         user.rfid = uid; user.save()
                         display.success("Badge associé")
+                        time.sleep(3)
                     else:
                         display.error("Pas de badge")
                 else:
