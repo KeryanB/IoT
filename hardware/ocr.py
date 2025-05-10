@@ -6,12 +6,18 @@ import subprocess
 
 def extract_ine_from_card():
     try:
-        # Prendre une photo
-        subprocess.run(["rpicam-still", "-o", "carte.jpg"], check=True)
+        # Prendre une photo avec libcamera-still et focus manuel à 3.0
+        subprocess.run([
+            "libcamera-still",
+            "--autofocus-mode", "manual",
+            "--lens-position", "30.0",
+            "--timeout", "1000",  # délai pour que focus/expo se stabilisent
+            "-o", "carte.jpg"
+        ], check=True)
 
         # Recadrer la zone INE
         image = Image.open("carte.jpg")
-        box = (2150, 800, 3500, 1600)  # À adapter si besoin
+        box = (2150, 2200, 3800, 2592)  # À adapter à ta résolution/carte
         cropped_image = image.crop(box)
         cropped_image.save("image_cropped.jpg")
 
@@ -40,4 +46,3 @@ def extract_ine_from_card():
     except Exception as e:
         print("Erreur OCR :", e)
         return None
-
