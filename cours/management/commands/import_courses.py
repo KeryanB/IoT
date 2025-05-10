@@ -101,23 +101,26 @@ class Command(BaseCommand):
     def get_or_create_professor(self, name):
         """
         Recherche un professeur existant ou le crée si nécessaire.
+        Le username sera en Prenom_Nom (tous les espaces remplacés par des '_').
         """
         if name == "Professeur Inconnu":
             return None
 
-        # Extraction prénom, nom et création de l'email
-        nom = name.split()[0]
-        prenom = " ".join(name.split()[1:]) if len(name.split()) > 1 else ""
+        # Transformation de "Prénom Nom" (ou "Nom Prénom") en "Prénom_Nom"
+        username = name.replace(" ", "_")
+
+        # Extraction nom / prénom pour les autres champs
+        parts = name.split()
+        nom = parts[-1]             # dernier token comme nom
+        prenom = " ".join(parts[:-1])  # tout le reste comme prénom
         email = f"{prenom.lower()}.{nom.lower()}@insa-strasbourg.fr"
 
-        # Date du jour au format DDMMYYYY
-        today = date.today().strftime('%d%m%Y')
-
-        # Création du mot de passe sous le format prénomnomdatedujour
-        password = f"{prenom.lower()}{nom.lower()}{today}"
+        # Mot de passe : prenom+nom+date_du_jour
+        today_str = date.today().strftime('%d%m%Y')
+        password = f"{prenom.lower()}{nom.lower()}{today_str}"
 
         professeur, created = User.objects.get_or_create(
-            username=name,
+            username=username,
             defaults={
                 "role": "prof",
                 "password": make_password(password),
@@ -128,6 +131,6 @@ class Command(BaseCommand):
         )
 
         if created:
-            self.stdout.write(self.style.SUCCESS(f"👨‍🏫 Professeur créé : {name}"))
+            self.stdout.write(self.style.SUCCESS(f"👨‍🏫 Professeur créé : {username}"))
 
         return professeur
