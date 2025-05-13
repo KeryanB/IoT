@@ -111,8 +111,8 @@ class Command(BaseCommand):
 
         # Extraction nom / prénom pour les autres champs
         parts = name.split()
-        nom = parts[-1]             # dernier token comme nom
-        prenom = " ".join(parts[:-1])  # tout le reste comme prénom
+        prenom = parts[-1]             # dernier token comme nom
+        nom = " ".join(parts[:-1])  # tout le reste comme prénom
         email = f"{prenom.lower()}.{nom.lower()}@insa-strasbourg.fr"
 
         # Mot de passe : prenom+nom+date_du_jour
