@@ -1,0 +1,5 @@
+# --- EduBadge : tâches utilisateur ---
+@reboot (sleep 20; cd /home/edubadge/Desktop/eduBadge && /usr/bin/python3 manage.py runserver 0.0.0.0:8001)      >> /home/edubadge/logs/runserver.log 2>&1
+@reboot (sleep 40; cd /home/edubadge/Desktop/eduBadge && /usr/bin/python3 manage.py import_courses) >> /home/edubadge/logs/import_courses.log 2>&1
+0 7 * * * cd /home/edubadge/Desktop/eduBadge && /usr/bin/python3 manage.py import_courses >> /home/edubadge/logs/import_courses.log 2>&1
+# -------------------------------------
