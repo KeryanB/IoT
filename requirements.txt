@@ -1,0 +1,13 @@
+Django==4.2.19
+icalendar==6.1.2
+lgpio==0.2.2.0
+mfrc522==0.0.7
+numpy==2.2.6
+pillow==11.1.0
+pytesseract==0.3.13
+reportlab==4.3.1
+requests==2.32.3
+rpi-ws281x==5.0.0
+opencv-python==4.11.0.86
+luma.core==2.4.2
+luma.oled==3.14.0
